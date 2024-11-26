@@ -1,51 +1,5 @@
 const proxyName = "节点选择";
 
-// 国内DNS服务器
-const domesticNameservers = [
-  "https://dns.alidns.com/dns-query", // 阿里云公共DNS
-  "https://doh.pub/dns-query", // 腾讯DNSPod
-  "https://doh.360.cn/dns-query" // 360安全DNS
-];
-// 国外DNS服务器
-const foreignNameservers = [
-  "https://1.1.1.1/dns-query", // Cloudflare(主)
-  "https://1.0.0.1/dns-query", // Cloudflare(备)
-  "https://208.67.222.222/dns-query", // OpenDNS(主)
-  "https://208.67.220.220/dns-query", // OpenDNS(备)
-  "https://194.242.2.2/dns-query", // Mullvad(主)
-  "https://194.242.2.3/dns-query" // Mullvad(备)
-]
-// DNS配置
-const dnsConfig = {
-  "enable": true,
-  "listen": "0.0.0.0:1053",
-  "ipv6": true,
-  "use-system-hosts": false,
-  "cache-algorithm": "arc",
-  "enhanced-mode": "fake-ip",
-  "fake-ip-range": "198.18.0.1/16",
-  "fake-ip-filter": [
-    // 本地主机/设备
-    "+.lan",
-    "+.local",
-    // Windows网络出现小地球图标
-    "+.msftconnecttest.com",
-    "+.msftncsi.com",
-    // QQ快速登录检测失败
-    "localhost.ptlogin2.qq.com",
-    "localhost.sec.qq.com",
-    // 微信快速登录检测失败
-    "localhost.work.weixin.qq.com"
-  ],
-  "default-nameserver": ["223.5.5.5","223.6.6.6", "119.29.29.29", "1.1.1.1", "8.8.8.8"],
-  "nameserver": [...domesticNameservers, ...foreignNameservers],
-  "proxy-server-nameserver": [...domesticNameservers, ...foreignNameservers],
-  "nameserver-policy": {
-    "geosite:private,cn,geolocation-cn": domesticNameservers,
-    "geosite:google,youtube,telegram,gfw,geolocation-!cn": foreignNameservers
-  }
-};
-
 // 规则集通用配置
 const ruleProviderCommon = {
   "type": "http",
@@ -117,6 +71,10 @@ function getProxiesByRegex(config, regex) {
 }
 // 程序入口
 function main(config) {
+      // 添加自用代理
+      config.proxies.push (
+        //  { name: '1 - 香港 - 示例 ', type: *, server: **, port: *, cipher: **, password: **, udp: true }
+    );
   const proxyCount = config?.proxies?.length ?? 0;
   const proxyProviderCount =
     typeof config?.["proxy-providers"] === "object" ? Object.keys(config["proxy-providers"]).length : 0;
@@ -262,12 +220,94 @@ function main(config) {
   // 覆盖原配置中的规则
   config["rule-providers"] = ruleProviders;
   config["rules"] = rules;
-
-  // 覆盖原配置中DNS配置
-  config["dns"] = dnsConfig;
-  // overwriteDns(config)
-
+  overwriteDns(config)
   // 返回修改后的配置
   return config;
 }
 
+// 防止 dns 泄露
+function overwriteDns (params) {
+  const cnDnsList = [
+      "https://223.5.5.5/dns-query",
+      "https://1.12.12.12/dns-query",
+  ];
+  const trustDnsList = [
+      'quic://dns.cooluc.com',
+      "https://1.0.0.1/dns-query",
+      "https://1.1.1.1/dns-query",
+  ];
+
+  const dnsOptions = {
+      enable: true,
+      "prefer-h3": true, // 如果 DNS 服务器支持 DoH3 会优先使用 h3
+      "default-nameserver": cnDnsList, // 用于解析其他 DNS 服务器、和节点的域名，必须为 IP, 可为加密 DNS。注意这个只用来解析节点和其他的 dns，其他网络请求不归他管
+      nameserver: trustDnsList, // 其他网络请求都归他管
+
+      // 这个用于覆盖上面的 nameserver
+      "nameserver-policy": {
+          //[combinedUrls]: notionDns,
+          "geosite:cn": cnDnsList,
+          "geosite:geolocation-!cn": trustDnsList,
+          // 如果你有一些内网使用的 DNS，应该定义在这里，多个域名用英文逗号分割
+          // '+. 公司域名.com, www.4399.com, +.baidu.com': '10.0.0.1'
+      },
+      fallback: trustDnsList,
+      "fallback-filter": {
+          geoip: true,
+          // 除了 geoip-code 配置的国家 IP, 其他的 IP 结果会被视为污染 geoip-code 配置的国家的结果会直接采用，否则将采用 fallback 结果
+          "geoip-code": "CN",
+          //geosite 列表的内容被视为已污染，匹配到 geosite 的域名，将只使用 fallback 解析，不去使用 nameserver
+          geosite: ["gfw"],
+          ipcidr: ["240.0.0.0/4"],
+          domain: ["+.google.com", "+.facebook.com", "+.youtube.com"],
+      },
+  };
+
+  // GitHub 加速前缀
+  const githubPrefix = "https://fastgh.lainbo.com/";
+
+  // GEO 数据 GitHub 资源原始下载地址
+  const rawGeoxURLs = {
+      geoip:
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.dat",
+      geosite:
+          "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
+      mmdb: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country-lite.mmdb",
+  };
+
+  // 生成带有加速前缀的 GEO 数据资源对象
+  const accelURLs = Object.fromEntries (
+      Object.entries (rawGeoxURLs).map (([key, githubUrl]) => [
+          key,
+          `${githubPrefix}${githubUrl}`,
+      ])
+  );
+
+  const otherOptions = {
+      "unified-delay": true,
+      "tcp-concurrent": true,
+      profile: {
+          "store-selected": true,
+          "store-fake-ip": true,
+      },
+      sniffer: {
+          enable: true,
+          sniff: {
+              TLS: {
+                  ports: [443, 8443],
+              },
+              HTTP: {
+                  ports: [80, "8080-8880"],
+                  "override-destination": true,
+              },
+          },
+      },
+      "geodata-mode": true,
+      "geox-url": accelURLs,
+  };
+
+  params.dns = { ...params.dns, ...dnsOptions };
+  Object.keys (otherOptions).forEach ((key) => {
+      params [key] = otherOptions [key];
+  });
+}
