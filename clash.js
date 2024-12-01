@@ -75,7 +75,11 @@ function main(config) {
       config.proxies.push (
         // { name: '', type: 'vless', server: '', port: 200, cipher: 'tls', password: '', udp: true },
       );
-      
+
+      if (!config["proxy-providers"]) {
+        config["proxy-providers"] = {};
+      }
+      // 添加自用订阅
       const url = "";
       if (url) {
         config["proxy-providers"]["etlqyfnnfr"] = {
