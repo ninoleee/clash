@@ -3,6 +3,8 @@ payload:
   - DOMAIN-SUFFIX,12306.com
   - DOMAIN-SUFFIX,oaifree.com
   - DOMAIN-SUFFIX,newonline.site
+  - DOMAIN-SUFFIX,linux.do
+  - DOMAIN-SUFFIX,nino.ltd
   - IP-CIDR,43.153.31.226/20
 
 # work
