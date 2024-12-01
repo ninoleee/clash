@@ -74,21 +74,6 @@ function main(config) {
       // 添加自用代理
       config.proxies.push (
         //  { name: '1 - 香港 - 示例 ', type: *, server: **, port: *, cipher: **, password: **, udp: true }
-        {
-            name: "新加坡 VM",
-            type: "vmess",
-            server: "138.2.104.55",
-            port: 50967,
-            uuid: "72e88807-e533-4854-b1b4-76e74a3f3171",
-            alterId: 0,
-            cipher: "aes-128-gcm",
-            network: "ws",
-            'ws-opts': {
-                path: "/72e88807"
-            },
-            udp: false,
-            tls: false,
-        }
     );
   const proxyCount = config?.proxies?.length ?? 0;
   const proxyProviderCount =
