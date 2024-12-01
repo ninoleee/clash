@@ -47,7 +47,7 @@ const rules = [
   "RULE-SET,cnmedia,国内媒体",
   "RULE-SET,glbmedia,国外媒体",
 
-  // 国外规则集
+  // 国���规则集
   "RULE-SET,proxy,"+ proxyName,
 
   // 国内规则集
@@ -73,157 +73,173 @@ function getProxiesByRegex(config, regex) {
 function main(config) {
       // 添加自用代理
       config.proxies.push (
-        //  { name: '1 - 香港 - 示例 ', type: *, server: **, port: *, cipher: **, password: **, udp: true }
-    );
-  const proxyCount = config?.proxies?.length ?? 0;
-  const proxyProviderCount =
-    typeof config?.["proxy-providers"] === "object" ? Object.keys(config["proxy-providers"]).length : 0;
-  if (proxyCount === 0 && proxyProviderCount === 0) {
-    throw new Error("配置文件中未找到任何代理");
-  }
+        // { name: '', type: 'vless', server: '', port: 200, cipher: 'tls', password: '', udp: true },
+      );
+      
+      const url = "";
+      if (url) {
+        config["proxy-providers"]["etlqyfnnfr"] = {
+          type: "http",
+          path: "./etlqyfnnfr_provider.yaml",
+          url: url,
+          interval: 3600,
+          "health-check": {
+            enable: false,
+            url: "http://www.gstatic.com/generate_204",
+            interval: 300
+          }
+        };
+      }
 
-  const autoProxyGroupRegexs = [
-    { name: "HK-自动选择", regex: /香港|HK|Hong|🇭🇰/ },
-    { name: "TW-自动选择", regex: /台湾|TW|Taiwan|Wan|🇨🇳|🇹🇼/ },
-    { name: "SG-自动选择", regex: /新加坡|狮城|SG|Singapore|🇸🇬/ },
-    { name: "JP-自动选择", regex: /日本|JP|Japan|🇯🇵/ },
-    { name: "US-自动选择", regex: /美国|US|United States|America|🇺🇸/ },
-    { name: "lucfor-自动选择", regex: /lucfor/ },
-  ];
+      const proxyCount = config?.proxies?.length ?? 0;
+      const proxyProviderCount =
+        typeof config?.["proxy-providers"] === "object" ? Object.keys(config["proxy-providers"]).length : 0;
+      if (proxyCount === 0 && proxyProviderCount === 0) {
+        throw new Error("配置文件中未找到任何代理");
+      }
 
-  const autoProxyGroups = autoProxyGroupRegexs
-    .map((item) => ({
-        name: item.name,
-        type: "url-test",
-        url: "http://www.gstatic.com/generate_204",
-        interval: 300,
-        tolerance: 50,
-        proxies: getProxiesByRegex(config, item.regex),
-        hidden: true,
-    }))
-    .filter((item) => item.proxies.length > 0);
+      const autoProxyGroupRegexs = [
+        { name: "HK-自动选择", regex: /(港|hk|hong\s*kong|🇭🇰)/},
+        { name: "TW-自动选择", regex: /(台|tw|taiwan|taipei|🇹🇼)/},
+        { name: "SG-自动选择", regex: /(新|sg|singapore|狮城|🇸🇬)/},
+        { name: "JP-自动选择", regex: /(日|jp|japan|东京|大阪|🇯🇵)/},
+        { name: "US-自动选择", regex: /(美|us|united\s*states|america|atlanta|chicago|dallas|los\s*angeles|miami|new\s*york|seattle|silicon\s*valley|🇺🇸)/},
+        { name: "KR-自动选择", regex: /(韩|kr|korea|seoul|🇰🇷)/},
+        { name: "其他节点", regex: /.*/ },
+      ];
+      const autoProxyGroups = autoProxyGroupRegexs
+        .map((item) => ({
+            name: item.name,
+            type: "url-test",
+            url: "http://www.gstatic.com/generate_204",
+            interval: 300,
+            tolerance: 50,
+            proxies: getProxiesByRegex(config, item.regex),
+            hidden: true,
+        }))
+        .filter((item) => item.proxies.length > 0);
 
-  // 覆盖原配置中的代理组
-  config["proxy-groups"] = [
-    {
-      ...groupBaseOption,
-      "name": "节点选择",
-      "type": "select",
-      "proxies": ["延迟选优", ...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)",],
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "延迟选优",
-      "type": "url-test",
-      "tolerance": 100,
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/speed.svg"
-    },
-    ...autoProxyGroups,
-    {
-      ...groupBaseOption,
-      "name": "故障转移",
-      "type": "fallback",
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/ambulance.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "负载均衡(散列)",
-      "type": "load-balance",
-      "strategy": "consistent-hashing",
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/merry_go.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "负载均衡(轮询)",
-      "type": "load-balance",
-      "strategy": "round-robin",
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/balance.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "ai",
-      "type": "select",
-      "proxies": ["延迟选优",...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png"
-    },
-    {
-      ...groupBaseOption,
-      "name": "加密",
-      "type": "select",
-      "proxies": [ "延迟选优", ...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
-      "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Cryptocurrency_3.png"
-    },
-    {
-      ...groupBaseOption,
-      "name": "国内媒体",
-      "type": "select",
-      "proxies": ["全局直连","延迟选优", ...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
-      // "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/bilibili.png"
-    },
-    {
-      ...groupBaseOption,
-      "name": "国外媒体",
-      "type": "select",
-      "proxies": [ "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
-      // "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/youtube.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "微软服务",
-      "type": "select",
-      "proxies": ["全局直连", "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
-      // "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/microsoft.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "苹果服务",
-      "type": "select",
-      "proxies": ["全局直连", "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
-      // "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/apple.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "全局直连",
-      "type": "select",
-      "proxies": ["DIRECT", "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
-      // "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/link.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "全局拦截",
-      "type": "select",
-      "proxies": ["REJECT", "DIRECT"],
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/block.svg"
-    },
-    {
-      ...groupBaseOption,
-      "name": "漏网之鱼",
-      "type": "select",
-      "proxies": [ "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
-      // "include-all": true,
-      "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/fish.svg"
-    }
-  ];
+      // 覆盖原配置中的代理组
+      config["proxy-groups"] = [
+        {
+          ...groupBaseOption,
+          "name": "节点选择",
+          "type": "select",
+          "proxies": ["延迟选优", ...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)",],
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "延迟选优",
+          "type": "url-test",
+          "tolerance": 100,
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/speed.svg"
+        },
+        ...autoProxyGroups,
+        {
+          ...groupBaseOption,
+          "name": "故障转移",
+          "type": "fallback",
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/ambulance.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "负载均衡(散列)",
+          "type": "load-balance",
+          "strategy": "consistent-hashing",
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/merry_go.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "负载均衡(轮询)",
+          "type": "load-balance",
+          "strategy": "round-robin",
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/balance.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "ai",
+          "type": "select",
+          "proxies": ["延迟选优",...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png"
+        },
+        {
+          ...groupBaseOption,
+          "name": "加密",
+          "type": "select",
+          "proxies": [ "延迟选优", ...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
+          "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Cryptocurrency_3.png"
+        },
+        {
+          ...groupBaseOption,
+          "name": "国内媒体",
+          "type": "select",
+          "proxies": ["全局直连","延迟选优", ...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
+          // "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/bilibili.png"
+        },
+        {
+          ...groupBaseOption,
+          "name": "国外媒体",
+          "type": "select",
+          "proxies": [ "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
+          // "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/youtube.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "微软服务",
+          "type": "select",
+          "proxies": ["全局直连", "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
+          // "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/microsoft.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "苹果服务",
+          "type": "select",
+          "proxies": ["全局直连", "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
+          // "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/apple.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "全局直连",
+          "type": "select",
+          "proxies": ["DIRECT", "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)"],
+          // "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/link.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "全局拦截",
+          "type": "select",
+          "proxies": ["REJECT", "DIRECT"],
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/block.svg"
+        },
+        {
+          ...groupBaseOption,
+          "name": "漏网之鱼",
+          "type": "select",
+          "proxies": [ "延迟选优",...autoProxyGroups.map((item) => item.name), "故障转移", "负载均衡(散列)", "负载均衡(轮询)", "全局直连"],
+          // "include-all": true,
+          "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/fish.svg"
+        }
+      ];
 
-  // 覆盖原配置中的规则
-  config["rule-providers"] = ruleProviders;
-  config["rules"] = rules;
-  overwriteDns(config)
-  // 返回修改后的配置
-  return config;
+      // 覆盖原配置中的规则
+      config["rule-providers"] = ruleProviders;
+      config["rules"] = rules;
+      overwriteDns(config)
+      // 返回修改后的配置
+      return config;
 }
 
 // 防止 dns 泄露
