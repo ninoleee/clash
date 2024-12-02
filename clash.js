@@ -25,7 +25,7 @@ const ruleProviders = {
   proxy: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/proxy.mrs",path: "./ruleset2/proxy.mrs",...ruleProviderCommon,},
   reject: {behavior: "domain",path: "./ruleset2/reject.mrs",...ruleProviderCommon,
     format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/ads.mrs"
-  },
+  }
 
 };
 // 规则
@@ -47,7 +47,7 @@ const rules = [
   "RULE-SET,cnmedia,国内媒体",
   "RULE-SET,glbmedia,国外媒体",
 
-  // 国���规则集
+  // 国外规则集
   "RULE-SET,proxy,"+ proxyName,
 
   // 国内规则集
@@ -80,19 +80,27 @@ function main(config) {
         config["proxy-providers"] = {};
       }
       // 添加自用订阅
-      const url = "";
-      if (url) {
-        config["proxy-providers"]["etlqyfnnfr"] = {
-          type: "http",
-          path: "./etlqyfnnfr_provider.yaml",
-          url: url,
-          interval: 3600,
-          "health-check": {
-            enable: false,
-            url: "http://www.gstatic.com/generate_204",
-            interval: 300
-          }
-        };
+      const urls = [
+
+      ];
+      
+      if (urls) {
+        urls.forEach((url, index) => {
+          const providerKey = `provider_${index + 1}`;
+          const fileName = url.split('/').pop().replace('.yaml', '');
+
+          config["proxy-providers"][providerKey] = {
+            type: "http",
+            path: `./${fileName}_provider.yaml`,
+            url: url,
+            interval: 3600,
+            "health-check": {
+              enable: false,
+              url: "http://www.gstatic.com/generate_204",
+              interval: 300
+            }
+          };
+        });
       }
 
       const proxyCount = config?.proxies?.length ?? 0;
