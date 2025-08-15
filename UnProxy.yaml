@@ -2,10 +2,11 @@ payload:
   - DOMAIN-SUFFIX,weixin.com
   - DOMAIN-SUFFIX,12306.com
   - DOMAIN-SUFFIX,oaifree.com
+
+# ownsite
   - DOMAIN-SUFFIX,newonline.site
   - DOMAIN-SUFFIX,nino.ltd
   - DOMAIN-SUFFIX,new.ln.cn
-  - IP-CIDR,43.153.31.226/20
 
 # local
   - IP-CIDR,168.0.0.0/20
