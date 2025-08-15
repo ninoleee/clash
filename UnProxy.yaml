@@ -11,12 +11,6 @@ payload:
   - DOMAIN-SUFFIX,new.ln.cn
 
 # local
-  - IP-CIDR,168.231.0.0/22
-  - IP-CIDR,168.70.0.0/20
-  - IP-CIDR,168.30.0.0/20
-  - IP-CIDR,168.231.0.0/20
-  - IP-CIDR,168.7.0.0/20
-  - IP-CIDR,168.8.0.0/20
   - IP-CIDR,168.0.0.0/20
   - IP-CIDR,192.168.0.0/20
   - IP-CIDR,127.0.0.0/20
