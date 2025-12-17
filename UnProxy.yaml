@@ -4,11 +4,9 @@ payload:
   - DOMAIN-SUFFIX,oaifree.com
 
 # ownsite
-  - DOMAIN-SUFFIX,newonline.site
   # - DOMAIN-SUFFIX,linux.do
-  - DOMAIN-SUFFIX,nino.ltd
   - DOMAIN-SUFFIX,nux.pp.ua
-  - DOMAIN-SUFFIX,new.ln.cn
+  - DOMAIN-SUFFIX,linixo.top
 
 # local
   - IP-CIDR,168.0.0.0/20
