@@ -9,22 +9,22 @@ const ruleProviderCommon = {
 // 规则集配置
 const ruleProviders = {
   unproxy: {behavior: "classical",url: "https://raw.githubusercontent.com/ninoleee/clash/refs/heads/main/UnProxy.yaml",path: "./ruleset2/own/UnProxy.yaml",...ruleProviderCommon,},
-  applications: {behavior: "classical","format": "text",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/applications.list",path: "./ruleset2/applications.list",...ruleProviderCommon,},
-  private: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/private.mrs",path: "./ruleset2/private.mrs",...ruleProviderCommon,},
-  steamcn: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/games-cn.mrs",path: "./ruleset2/SteamCN.mrs",...ruleProviderCommon,},
+  applications: {behavior: "classical","format": "text",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/applications.list",path: "./ruleset2/applications.list",...ruleProviderCommon,},
+  private: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/private.mrs",path: "./ruleset2/private.mrs",...ruleProviderCommon,},
+  steamcn: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/games-cn.mrs",path: "./ruleset2/SteamCN.mrs",...ruleProviderCommon,},
   apple: {behavior: "classical",url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Apple/Apple_Classical_No_Resolve.yaml",path: "./ruleset2/blackmatrix7/Apple_Classical_No_Resolve.yaml",...ruleProviderCommon,},
   microsoft: {behavior: "classical",url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Microsoft/Microsoft_No_Resolve.yaml",path: "./ruleset2/blackmatrix7/Microsoft_No_Resolve.yaml",...ruleProviderCommon,},
   cnmedia: {behavior: "classical",url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ChinaMedia/ChinaMedia_No_Resolve.yaml",path: "./ruleset2/blackmatrix7/ChinaMedia_No_Resolve.yaml",...ruleProviderCommon,},
-  cnmax_nomedia: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/cn.mrs",path: "./ruleset2/cn.mrs",...ruleProviderCommon,},
-  cnip: {behavior: "ipcidr",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/cnip.mrs",path: "./ruleset2/cnip.mrs",...ruleProviderCommon,},
+  cnmax_nomedia: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/cn.mrs",path: "./ruleset2/cn.mrs",...ruleProviderCommon,},
+  cnip: {behavior: "ipcidr",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/cnip.mrs",path: "./ruleset2/cnip.mrs",...ruleProviderCommon,},
 
   myproxy: {behavior: "classical",url: "https://raw.githubusercontent.com/ninoleee/clash/refs/heads/main/MyProxy.yaml",path: "./ruleset2/own/MyProxy.yaml",...ruleProviderCommon,},
   crypto: {behavior: "classical",url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Crypto/Crypto.yaml",path: "./ruleset2/blackmatrix7/Crypto.yaml",...ruleProviderCommon,},
-  ai: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/ai.mrs",path: "./ruleset2/ai.mrs",...ruleProviderCommon,},
+  ai: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/ai.mrs",path: "./ruleset2/ai.mrs",...ruleProviderCommon,},
   glbmedia: {behavior: "classical",url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GlobalMedia/GlobalMedia_Classical_No_Resolve.yaml",path: "./ruleset2/blackmatrix7/GlobalMedia_Classical_No_Resolve.yaml",...ruleProviderCommon,},
-  proxy: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/proxy.mrs",path: "./ruleset2/proxy.mrs",...ruleProviderCommon,},
+  proxy: {behavior: "domain",format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/proxy.mrs",path: "./ruleset2/proxy.mrs",...ruleProviderCommon,},
   reject: {behavior: "domain",path: "./ruleset2/reject.mrs",...ruleProviderCommon,
-    format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/clash-ruleset/ads.mrs"
+    format: "mrs",url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/ads.mrs"
   }
 
 };
@@ -32,7 +32,7 @@ const ruleProviders = {
 const rules = [
   // 自定义规则
   "RULE-SET,unproxy,DIRECT",
-  "RULE-SET,myproxy,"+ proxyName,,
+  "RULE-SET,myproxy,"+ proxyName,
   // Loyalsoldier 规则集// blackmatrix7 规则集dsf
   "RULE-SET,reject,全局拦截",
   "RULE-SET,applications,DIRECT",
@@ -130,6 +130,33 @@ function main(config) {
             hidden: true,
         }))
         .filter((item) => item.proxies.length > 0);
+      const landingNodeProxies = [
+          {
+            "name": "webshare",
+            "server": "72.1.182.65",
+            "port": 5862,
+            "type": "socks5",
+            "username": "fqognqgw",
+            "password": "glghccebx4wt",
+            "tls": false,
+            "skip-cert-verify": true,
+            "udp": true,
+            "dialer-proxy": "手动节点"
+          },
+          // 如果有更多落地节点，在这里继续添加
+          // {
+          //   "name": "landing-node-2",
+          //   ...
+          //   "dialer-proxy": "手动节点"
+          // }
+      ];
+
+      // 将落地节点添加到代理列表
+      landingNodeProxies.forEach(proxy => {
+        config.proxies.push(proxy);
+      });
+
+      const landingNodeNames = landingNodeProxies.map(p => p.name);
 
       // 覆盖原配置中的代理组
       config["proxy-groups"] = [
@@ -140,6 +167,21 @@ function main(config) {
           "proxies": ["延迟选优", ...autoProxyGroups.map((item) => item.name),"故障转移", "负载均衡(散列)", "负载均衡(轮询)",],
           "include-all": true,
           "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/adjust.svg"
+        },
+        {
+            ...groupBaseOption,
+            "name": "手动节点",
+            "type": "select",
+            "proxies": ["全局直连",],
+            "include-all": true,
+            "icon": "https://fastly.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/select.png"
+        },
+        {
+          ...groupBaseOption,
+          "name": "落地节点",
+          "type": "select",
+          "proxies": [...landingNodeNames],
+          "icon": "https://fastly.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/applehome.png"
         },
         {
           ...groupBaseOption,
@@ -173,7 +215,7 @@ function main(config) {
           "include-all": true,
           "icon": "https://fastly.jsdelivr.net/gh/clash-verge-rev/clash-verge-rev.github.io@main/docs/assets/icons/balance.svg"
         },
-        {
+                {
           ...groupBaseOption,
           "name": "ai",
           "type": "select",
