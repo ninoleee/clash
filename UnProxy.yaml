@@ -2,9 +2,9 @@ payload:
   - DOMAIN-SUFFIX,weixin.com
   - DOMAIN-SUFFIX,12306.com
   - DOMAIN-SUFFIX,oaifree.com
-  - DOMAIN-SUFFIX,newonline.site
-  - DOMAIN-SUFFIX,linux.do
-  - DOMAIN-SUFFIX,nino.ltd
+  - DOMAIN-SUFFIX,nux.ink
+  - DOMAIN-SUFFIX,linino.net
+  - DOMAIN-SUFFIX,nux.i234.me
   - IP-CIDR,43.153.31.226/20
 
 # work
