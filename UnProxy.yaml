@@ -8,6 +8,8 @@ payload:
   - DOMAIN-SUFFIX,nux.ink
   - DOMAIN-SUFFIX,linixo.net
   - DOMAIN-SUFFIX,linixo.top
+  - DOMAIN-SUFFIX,nux.i234.me
+  - IP-CIDR,43.153.31.226/20
 
 # local
   - IP-CIDR,168.0.0.0/20
