@@ -4,8 +4,9 @@ payload:
   - DOMAIN-SUFFIX,oaifree.com
 
 # ownsite
-  # - DOMAIN-SUFFIX,linux.do
-  - DOMAIN-SUFFIX,nux.pp.ua
+  - DOMAIN-SUFFIX,inov.xin
+  - DOMAIN-SUFFIX,nux.ink
+  - DOMAIN-SUFFIX,linixo.net
   - DOMAIN-SUFFIX,linixo.top
 
 # local
