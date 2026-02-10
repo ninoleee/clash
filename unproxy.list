@@ -1,0 +1,17 @@
+# Unbreak
+# 由于广告屏蔽无法做到100%完美，故由墨鱼维护本分流，用以修正误屏蔽的域名
+# logtime: 2024-10-22
+
+DOMAIN-SUFFIX,nux.i234.me
+# > dedao
+DOMAIN-SUFFIX,umiwi.com
+DOMAIN-SUFFIX,12306.com
+DOMAIN-SUFFIX,oaifree.com
+# > general
+DOMAIN,app.adjust.com
+
+IP-CIDR,168.231.0.0/22,no-resolve
+IP-CIDR,168.70.0.0/20,no-resolve
+IP-CIDR,168.30.0.0/20,no-resolve
+IP-CIDR,168.7.0.0/20,no-resolve
+IP-CIDR,168.8.0.0/20,no-resolve
