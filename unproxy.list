@@ -2,7 +2,10 @@
 # 由于广告屏蔽无法做到100%完美，故由墨鱼维护本分流，用以修正误屏蔽的域名
 # logtime: 2024-10-22
 
-DOMAIN-SUFFIX,nux.i234.me
+DOMAIN-SUFFIX,nux.ink
+DOMAIN-SUFFIX,linixo.net
+DOMAIN-SUFFIX,linixo.top
+DOMAIN-SUFFIX,inov.xin
 # > dedao
 DOMAIN-SUFFIX,umiwi.com
 DOMAIN-SUFFIX,12306.com
