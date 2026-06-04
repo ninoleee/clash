@@ -50,6 +50,11 @@ const rules = [
   // 国外规则集
   "RULE-SET,proxy,"+ proxyName,
 
+  "DOMAIN-SUFFIX,cursor-cdn.com,ai",
+  "DOMAIN-SUFFIX,cursor.com,ai",
+  "DOMAIN-SUFFIX,cursor.sh,ai",
+  "DOMAIN-SUFFIX,cursorapi.com,ai",
+
   // 国内规则集
   "RULE-SET,cnmax_nomedia,DIRECT,no-resolve",
   "RULE-SET,cnip,DIRECT",
@@ -81,7 +86,7 @@ function main(config) {
       }
       // 添加自用订阅
       const urls = [
-        
+
       ];
       
       if (urls) {
@@ -132,7 +137,7 @@ function main(config) {
         .filter((item) => item.proxies.length > 0);
       const landingNodeProxies = [
           {
-            "name": "webshare",
+            "name": "Z",
             "server": "72.1.182.65",
             "port": 5862,
             "type": "socks5",
@@ -147,16 +152,16 @@ function main(config) {
           // {
           //   "name": "landing-node-2",
           //   ...
-          //   "dialer-proxy": "手动节点"
+          //   "dialer-proxy": "节点选择"
           // }
       ];
 
       // 将落地节点添加到代理列表
-      landingNodeProxies.forEach(proxy => {
-        config.proxies.push(proxy);
-      });
+      // landingNodeProxies.forEach(proxy => {
+      //   config.proxies.push(proxy);
+      // });
 
-      const landingNodeNames = landingNodeProxies.map(p => p.name);
+      // const landingNodeNames = landingNodeProxies.map(p => p.name);
 
       // 覆盖原配置中的代理组
       config["proxy-groups"] = [
@@ -172,17 +177,16 @@ function main(config) {
             ...groupBaseOption,
             "name": "手动节点",
             "type": "select",
-            "proxies": ["全局直连",],
             "include-all": true,
             "icon": "https://fastly.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/select.png"
         },
-        {
-          ...groupBaseOption,
-          "name": "落地节点",
-          "type": "select",
-          "proxies": [...landingNodeNames],
-          "icon": "https://fastly.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/applehome.png"
-        },
+        // {
+        //   ...groupBaseOption,
+        //   "name": "落地节点",
+        //   "type": "select",
+        //   "proxies": [...landingNodeNames],
+        //   "icon": "https://fastly.jsdelivr.net/gh/shindgewongxj/WHATSINStash@master/icon/applehome.png"
+        // },
         {
           ...groupBaseOption,
           "name": "延迟选优",
