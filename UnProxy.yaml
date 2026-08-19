@@ -12,9 +12,17 @@ payload:
   - IP-CIDR,43.153.31.226/20
 
 # local
-  - IP-CIDR,168.0.0.0/20
-  - IP-CIDR,192.168.0.0/20
-  - IP-CIDR,127.0.0.0/20
-  - IP-CIDR,172.0.0.0/20
-  - IP-CIDR,168.18.0.0/20
+  # RFC 1918 私有地址
+  - IP-CIDR,10.0.0.0/8,no-resolve
+  - IP-CIDR,172.16.0.0/12,no-resolve
+  - IP-CIDR,192.168.0.0/16,no-resolve
 
+  # 本机和本地链路
+  - IP-CIDR,127.0.0.0/8,no-resolve
+  - IP-CIDR,169.254.0.0/16,no-resolve
+
+  # CGNAT / Tailscale
+  - IP-CIDR,100.64.0.0/10,no-resolve
+
+  # 当前特殊服务
+  - IP-CIDR,168.18.1.1/32,no-resolve
