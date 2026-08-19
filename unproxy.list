@@ -14,3 +14,6 @@ DOMAIN-SUFFIX,oaifree.com
 DOMAIN,app.adjust.com
 
 IP-CIDR,168.0.0.0/20,no-resolve
+IP-CIDR,192.168.0.0/20,no-resolve
+IP-CIDR,172.0.0.0/20,no-resolve
+IP-CIDR,127.0.0.0/20,no-resolve
