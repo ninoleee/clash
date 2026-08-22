@@ -1,0 +1,824 @@
+# ==================================================
+# OpenWrt 旁路由 + Nikki/Mihomo 完整配置
+# ==================================================
+
+
+# ==================================================
+# 入站端口
+#
+# Nikki 的 Redirect、TProxy、Mixed 端口需要与此一致。
+# ==================================================
+
+mixed-port: 7893
+redir-port: 7892
+tproxy-port: 7895
+
+
+# ==================================================
+# 全局配置
+# ==================================================
+
+mode: rule
+find-process-mode: off
+
+allow-lan: true
+bind-address: "*"
+
+ipv6: true
+unified-delay: true
+tcp-concurrent: true
+
+log-level: warning
+
+keep-alive-idle: 600
+keep-alive-interval: 15
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+# external-controller、secret、external-ui 由 Nikki 管理。
+# NTP 由 OpenWrt 系统负责。
+
+
+# ==================================================
+# TUN
+#
+# TUN 由本配置开启。
+# nftables、LAN 流量接管和策略路由仍由 Nikki 管理。
+# ==================================================
+
+tun:
+  enable: true
+  stack: mixed
+
+  dns-hijack:
+    - "any:53"
+    - "tcp://any:53"
+
+  # 防止与 Nikki 的策略路由和 nftables 重复
+  auto-route: false
+  auto-redirect: false
+  auto-detect-interface: false
+
+  # 仅当 Nikki 明确要求固定设备名时启用：
+  # device: nikki
+
+
+# ==================================================
+# DNS
+#
+# 1. 节点域名使用国内 DNS；
+# 2. DIRECT 域名使用国内 DNS；
+# 3. 其他域名使用国外 DoH；
+# 4. 国外 DoH 连接遵循 rules；
+# 5. IPv6 和 Fake-IP 均开启。
+# ==================================================
+
+dns:
+  enable: true
+  listen: "0.0.0.0:1053"
+
+  ipv6: true
+  cache-algorithm: arc
+  prefer-h3: false
+
+  respect-rules: true
+  use-hosts: true
+  use-system-hosts: true
+
+  enhanced-mode: fake-ip
+  fake-ip-range: "198.18.0.1/16"
+  fake-ip-filter-mode: blacklist
+
+  # 启动引导 DNS，使用纯 IP 避免循环解析
+  default-nameserver:
+    - "223.5.5.5"
+    - "1.12.12.12"
+
+  # 代理节点服务器域名解析
+  proxy-server-nameserver:
+    - "https://223.5.5.5/dns-query"
+    - "https://1.12.12.12/dns-query"
+
+  # DIRECT 域名解析
+  direct-nameserver:
+    - "https://223.5.5.5/dns-query"
+    - "https://1.12.12.12/dns-query"
+
+  # 默认远程 DNS
+  # #RULES 表示 DoH 连接按照 rules 分流
+  nameserver:
+    - "https://1.1.1.1/dns-query#RULES"
+    - "https://8.8.8.8/dns-query#RULES"
+
+  fake-ip-filter:
+    # 远程 Fake-IP 兼容规则
+    - "rule-set:fakeip-filter"
+
+    # 局域网及本地域名
+    - "*.lan"
+    - "*.local"
+    - "+.localhost"
+    - "+.home.arpa"
+
+    # Microsoft 联网检测
+    - "+.msftconnecttest.com"
+    - "+.msftncsi.com"
+
+    # Apple 推送
+    - "+.push.apple.com"
+
+    # 时间同步
+    - "time.*.com"
+    - "time.*.gov"
+    - "ntp.*.com"
+
+    # 腾讯登录兼容
+    - "localhost.ptlogin2.qq.com"
+
+
+# ==================================================
+# 流量嗅探
+#
+# TLS 用于恢复 HTTPS 域名；
+# QUIC 用于恢复 UDP/443、HTTP/3 域名。
+# ==================================================
+
+sniffer:
+  enable: true
+
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: true
+
+  sniff:
+    TLS:
+      ports:
+        - 443
+        - 8443
+      override-destination: true
+
+    QUIC:
+      ports:
+        - 443
+        - 8443
+      override-destination: true
+
+  skip-domain:
+    - "Mijia Cloud"
+    - "+.push.apple.com"
+
+
+# ==================================================
+# 节点替换区域
+#
+# 当前是合法的空节点列表。
+#
+# 如果手动添加节点，请将：
+#
+# proxies: []
+#
+# 替换为：
+#
+# proxies:
+#   - name: "你的节点"
+#     type: ...
+#     ...
+#
+# 如果节点由 Nikki 订阅生成，则保留 Nikki 生成的
+# proxies 或 proxy-providers，不要重复声明顶级字段。
+# ==================================================
+
+proxies: 
+
+
+# ==================================================
+# 可选：配置内 Proxy Provider
+#
+# 仅当订阅地址直接返回 Mihomo Proxy Provider YAML 时使用。
+# 普通机场订阅建议在 Nikki 的订阅管理中添加。
+#
+# 使用时取消注释，并在本地填写订阅地址。
+# ==================================================
+
+# proxy-providers:
+#   subscription:
+#     type: http
+#     url: "REPLACE_WITH_SUBSCRIPTION_URL"
+#     path: "./proxy_provider/subscription.yaml"
+#     interval: 3600
+#
+#     health-check:
+#       enable: true
+#       url: "https://www.gstatic.com/generate_204"
+#       interval: 600
+#       timeout: 5000
+#       lazy: true
+
+
+# ==================================================
+# 策略组
+#
+# include-all: true 自动收集：
+#
+# - proxies 中的节点；
+# - proxy-providers 中的节点。
+# ==================================================
+
+proxy-groups:
+  # ------------------------------------------------
+  # 主节点选择
+  #
+  # 已删除 DIRECT，防止代理流量被误设为直连。
+  # ------------------------------------------------
+
+  - name: "节点选择"
+    type: select
+
+    proxies:
+      - "延迟选优"
+      - "故障转移"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # 手动选择全部节点
+  # ------------------------------------------------
+
+  - name: "手动节点"
+    type: select
+    include-all: true
+
+    exclude-filter: >-
+      (?i)(剩余流量|流量剩余|套餐到期|到期时间|过期时间|官网|用户群|订阅|重置|traffic|expire)
+
+  # ------------------------------------------------
+  # 自动选择低延迟节点
+  # ------------------------------------------------
+
+  - name: "延迟选优"
+    type: url-test
+    include-all: true
+
+    exclude-filter: >-
+      (?i)(剩余流量|流量剩余|套餐到期|到期时间|过期时间|官网|用户群|订阅|重置|traffic|expire)
+
+    url: "https://www.gstatic.com/generate_204"
+
+    interval: 600
+    timeout: 5000
+    tolerance: 100
+    lazy: true
+
+  # ------------------------------------------------
+  # 故障转移
+  #
+  # 按节点原始顺序选择第一个健康节点。
+  # ------------------------------------------------
+
+  - name: "故障转移"
+    type: fallback
+    include-all: true
+
+    exclude-filter: >-
+      (?i)(剩余流量|流量剩余|套餐到期|到期时间|过期时间|官网|用户群|订阅|重置|traffic|expire)
+
+    url: "https://www.gstatic.com/generate_204"
+
+    interval: 600
+    timeout: 5000
+    lazy: true
+
+  # ------------------------------------------------
+  # AI 服务
+  #
+  # 不提供 DIRECT。
+  # ------------------------------------------------
+
+  - name: "AI服务"
+    type: select
+
+    proxies:
+      - "节点选择"
+      - "延迟选优"
+      - "故障转移"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # Telegram
+  # ------------------------------------------------
+
+  - name: "Telegram"
+    type: select
+
+    proxies:
+      - "节点选择"
+      - "延迟选优"
+      - "故障转移"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # Netflix
+  # ------------------------------------------------
+
+  - name: "Netflix"
+    type: select
+
+    proxies:
+      - "节点选择"
+      - "延迟选优"
+      - "故障转移"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # 加密货币服务
+  # ------------------------------------------------
+
+  - name: "加密服务"
+    type: select
+
+    proxies:
+      - "节点选择"
+      - "延迟选优"
+      - "故障转移"
+      - "手动节点"
+      - DIRECT
+
+  # ------------------------------------------------
+  # 国内媒体
+  # ------------------------------------------------
+
+  - name: "国内媒体"
+    type: select
+
+    proxies:
+      - DIRECT
+      - "节点选择"
+      - "延迟选优"
+
+  # ------------------------------------------------
+  # 国外媒体
+  # ------------------------------------------------
+
+  - name: "国外媒体"
+    type: select
+
+    proxies:
+      - "节点选择"
+      - "延迟选优"
+      - "故障转移"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # Microsoft
+  #
+  # 默认 DIRECT。
+  # ------------------------------------------------
+
+  - name: "微软服务"
+    type: select
+
+    proxies:
+      - DIRECT
+      - "节点选择"
+      - "延迟选优"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # Apple
+  #
+  # 默认 DIRECT。
+  # ------------------------------------------------
+
+  - name: "苹果服务"
+    type: select
+
+    proxies:
+      - DIRECT
+      - "节点选择"
+      - "延迟选优"
+      - "手动节点"
+
+  # ------------------------------------------------
+  # 广告拦截
+  #
+  # 默认 REJECT，避免 REJECT-DROP 使应用等待超时。
+  # ------------------------------------------------
+
+  - name: "广告拦截"
+    type: select
+
+    proxies:
+      - REJECT
+      - REJECT-DROP
+      - DIRECT
+
+  # ------------------------------------------------
+  # 最终匹配
+  # ------------------------------------------------
+
+  - name: "漏网之鱼"
+    type: select
+
+    proxies:
+      - "节点选择"
+      - "延迟选优"
+      - "故障转移"
+      - DIRECT
+
+
+# ==================================================
+# 分流规则
+#
+# 从上到下依次匹配。
+# ==================================================
+
+rules:
+  # ------------------------------------------------
+  # 私有域名
+  # ------------------------------------------------
+
+  - "RULE-SET,private,DIRECT"
+
+  # ------------------------------------------------
+  # 国外 DoH 上游
+  #
+  # nameserver 使用 #RULES，因此这些连接明确走代理。
+  # ------------------------------------------------
+
+  - "IP-CIDR,1.1.1.1/32,节点选择,no-resolve"
+  - "IP-CIDR,8.8.8.8/32,节点选择,no-resolve"
+
+  - "IP-CIDR6,2606:4700:4700::1111/128,节点选择,no-resolve"
+  - "IP-CIDR6,2001:4860:4860::8888/128,节点选择,no-resolve"
+
+  # ------------------------------------------------
+  # 自定义规则
+  #
+  # 强制代理优先于强制直连。
+  # ------------------------------------------------
+
+  - "RULE-SET,myproxy,节点选择"
+  - "RULE-SET,unproxy,DIRECT"
+
+  # ------------------------------------------------
+  # Google 公共资源
+  #
+  # 放在广告规则前，防止 Google Fonts 等资源误杀。
+  # ------------------------------------------------
+
+  - "DOMAIN-SUFFIX,gstatic.com,节点选择"
+  - "DOMAIN-SUFFIX,googleapis.com,节点选择"
+  - "DOMAIN-SUFFIX,googleusercontent.com,节点选择"
+
+  # ------------------------------------------------
+  # OpenAI / ChatGPT
+  # ------------------------------------------------
+
+  - "DOMAIN-SUFFIX,openai.com,AI服务"
+  - "DOMAIN-SUFFIX,chatgpt.com,AI服务"
+  - "DOMAIN-SUFFIX,oaistatic.com,AI服务"
+  - "DOMAIN-SUFFIX,oaiusercontent.com,AI服务"
+  - "DOMAIN-SUFFIX,auth0.openai.com,AI服务"
+
+  # ------------------------------------------------
+  # Cursor
+  # ------------------------------------------------
+
+  - "DOMAIN-SUFFIX,cursor-cdn.com,AI服务"
+  - "DOMAIN-SUFFIX,cursor.com,AI服务"
+  - "DOMAIN-SUFFIX,cursor.sh,AI服务"
+  - "DOMAIN-SUFFIX,cursorapi.com,AI服务"
+
+  # ------------------------------------------------
+  # AI 规则集
+  # ------------------------------------------------
+
+  - "RULE-SET,ai,AI服务"
+
+  # ------------------------------------------------
+  # Telegram
+  #
+  # 已移到广告规则之前，降低误杀风险。
+  # ------------------------------------------------
+
+  - "RULE-SET,telegram,Telegram"
+  - "RULE-SET,telegram-ip,Telegram,no-resolve"
+
+  # ------------------------------------------------
+  # Netflix
+  #
+  # 已移到广告规则之前。
+  # ------------------------------------------------
+
+  - "RULE-SET,netflix,Netflix"
+
+  # ------------------------------------------------
+  # Apple 和 Microsoft
+  #
+  # 已移到广告规则之前，降低推送、登录、
+  # App Store、OneDrive 等服务被误杀的概率。
+  # ------------------------------------------------
+
+  - "RULE-SET,apple,苹果服务"
+  - "RULE-SET,microsoft,微软服务"
+
+  # ------------------------------------------------
+  # 广告
+  # ------------------------------------------------
+
+  - "RULE-SET,reject,广告拦截"
+
+  # ------------------------------------------------
+  # 其他分类服务
+  # ------------------------------------------------
+
+  - "RULE-SET,crypto,加密服务"
+  - "RULE-SET,games-cn,DIRECT"
+  - "RULE-SET,cnmedia,国内媒体"
+  - "RULE-SET,globalmedia,国外媒体"
+
+  # ------------------------------------------------
+  # 通用国外域名
+  # ------------------------------------------------
+
+  - "RULE-SET,proxy,节点选择"
+
+  # ------------------------------------------------
+  # 中国大陆域名和 IP
+  # ------------------------------------------------
+
+  - "RULE-SET,cn,DIRECT"
+  - "RULE-SET,cnip,DIRECT,no-resolve"
+
+  # cnip.mrs 已包含中国大陆 IPv4/IPv6，
+  # 不重复使用 GEOIP,CN。
+
+  # ------------------------------------------------
+  # 最终匹配
+  # ------------------------------------------------
+
+  - "MATCH,漏网之鱼"
+
+
+# ==================================================
+# Rule Providers
+#
+# 已删除 applications。
+#
+# 为降低首次启动对代理策略组的依赖，
+# 本版未设置 Provider 的 proxy 字段。
+# ==================================================
+
+rule-providers:
+  # ------------------------------------------------
+  # 自定义强制直连
+  # ------------------------------------------------
+
+  unproxy:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/ninoleee/clash/refs/heads/main/UnProxy.yaml"
+    path: "./ruleset2/own/UnProxy.yaml"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # 自定义强制代理
+  # ------------------------------------------------
+
+  myproxy:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/ninoleee/clash/refs/heads/main/MyProxy.yaml"
+    path: "./ruleset2/own/MyProxy.yaml"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # 私有网络
+  # ------------------------------------------------
+
+  private:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/private.mrs"
+    path: "./ruleset2/dustinwin/private.mrs"
+
+    interval: 604800
+
+  # ------------------------------------------------
+  # 中国区游戏
+  # ------------------------------------------------
+
+  games-cn:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/games-cn.mrs"
+    path: "./ruleset2/dustinwin/games-cn.mrs"
+
+    interval: 259200
+
+  # ------------------------------------------------
+  # AI
+  # ------------------------------------------------
+
+  ai:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/ai.mrs"
+    path: "./ruleset2/dustinwin/ai.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # 通用国外域名
+  # ------------------------------------------------
+
+  proxy:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/proxy.mrs"
+    path: "./ruleset2/dustinwin/proxy.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # 广告
+  # ------------------------------------------------
+
+  reject:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/ads.mrs"
+    path: "./ruleset2/dustinwin/ads.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # 中国大陆域名
+  # ------------------------------------------------
+
+  cn:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/cn.mrs"
+    path: "./ruleset2/dustinwin/cn.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # 中国大陆 IPv4/IPv6
+  # ------------------------------------------------
+
+  cnip:
+    type: http
+    behavior: ipcidr
+    format: mrs
+
+    url: "https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-ruleset/cnip.mrs"
+    path: "./ruleset2/dustinwin/cnip.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # Fake-IP 过滤
+  # ------------------------------------------------
+
+  fakeip-filter:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://raw.githubusercontent.com/wwqgtxx/clash-rules/release/fakeip-filter.mrs"
+    path: "./ruleset2/fake-ip-filter.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # Apple
+  # ------------------------------------------------
+
+  apple:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Apple/Apple_Classical_No_Resolve.yaml"
+    path: "./ruleset2/blackmatrix7/Apple_Classical_No_Resolve.yaml"
+
+    interval: 259200
+
+  # ------------------------------------------------
+  # Microsoft
+  # ------------------------------------------------
+
+  microsoft:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Microsoft/Microsoft_No_Resolve.yaml"
+    path: "./ruleset2/blackmatrix7/Microsoft_No_Resolve.yaml"
+
+    interval: 259200
+
+  # ------------------------------------------------
+  # 国内媒体
+  # ------------------------------------------------
+
+  cnmedia:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/ChinaMedia/ChinaMedia_No_Resolve.yaml"
+    path: "./ruleset2/blackmatrix7/ChinaMedia_No_Resolve.yaml"
+
+    interval: 259200
+
+  # ------------------------------------------------
+  # 国外媒体
+  # ------------------------------------------------
+
+  globalmedia:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/GlobalMedia/GlobalMedia_Classical_No_Resolve.yaml"
+    path: "./ruleset2/blackmatrix7/GlobalMedia_Classical_No_Resolve.yaml"
+
+    interval: 259200
+
+  # ------------------------------------------------
+  # 加密货币
+  # ------------------------------------------------
+
+  crypto:
+    type: http
+    behavior: classical
+    format: yaml
+
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Crypto/Crypto.yaml"
+    path: "./ruleset2/blackmatrix7/Crypto.yaml"
+
+    interval: 259200
+
+  # ------------------------------------------------
+  # Telegram 域名
+  # ------------------------------------------------
+
+  telegram:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.mrs"
+    path: "./ruleset2/metacubex/telegram.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # Telegram IP
+  # ------------------------------------------------
+
+  telegram-ip:
+    type: http
+    behavior: ipcidr
+    format: mrs
+
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/telegram.mrs"
+    path: "./ruleset2/metacubex/telegram-ip.mrs"
+
+    interval: 86400
+
+  # ------------------------------------------------
+  # Netflix
+  # ------------------------------------------------
+
+  netflix:
+    type: http
+    behavior: domain
+    format: mrs
+
+    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.mrs"
+    path: "./ruleset2/metacubex/netflix.mrs"
+
+    interval: 86400
